@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RETRO DEUTSCH A1 - 復古德語打磚塊</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 15px;
+            background-color: #08080c;
+            color: #33ff00;
+            font-family: 'VT323', 'Courier New', monospace, 'Microsoft JhengHei', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            user-select: none;
+        }
+
+        .arcade-cabinet {
+            background: #14141d;
+            border: 4px solid #33ff00;
+            box-shadow: 0 0 20px rgba(51, 255, 0, 0.25), inset 0 0 25px rgba(0, 0, 0, 0.9);
+            padding: 18px;
+            border-radius: 10px;
+            position: relative;
+        }
+
+        .arcade-cabinet::after {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(
+                rgba(18, 16, 16, 0) 50%, 
+                rgba(0, 0, 0, 0.3) 50%
+            );
+            background-size: 100% 4px;
+            z-index: 10;
+            pointer-events: none;
+            border-radius: 6px;
+        }
+
+        h1 {
+            margin: 0 0 10px 0;
+            font-size: 32px;
+            text-align: center;
+            color: #ffcc00;
+            text-shadow: 3px 3px 0px #cc0055, 0 0 10px rgba(255, 204, 0, 0.6);
+            letter-spacing: 3px;
+        }
+
+        #hud {
+            width: 720px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #000000;
+            border: 2px solid #555;
+            padding: 10px 16px;
+            margin-bottom: 8px;
+            gap: 12px;
+        }
+
+        .stats {
+            font-size: 18px;
+            display: flex;
+            gap: 10px;
+            color: #00ffff;
+            text-shadow: 0 0 6px rgba(0, 255, 255, 0.6);
+            white-space: nowrap;
+        }
+
+        .target-box {
+            font-size: 18px;
+            font-weight: bold;
+            color: #ffff00;
+            text-shadow: 0 0 8px rgba(255, 255, 0, 0.5);
+            flex: 1;
+            text-align: center;
+            background: #111118;
+            padding: 6px 10px;
+            border: 1px dashed #666;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        #last-hit-bar {
+            width: 720px;
+            height: 28px;
+            background: #0d0d14;
+            border: 1px solid #333;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            color: #33ff00;
+            letter-spacing: 1px;
+        }
+
+        .actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        select {
+            max-width: 130px;
+            text-overflow: ellipsis;
+        }
+
+        select, button {
+            background: #000;
+            color: #33ff00;
+            border: 2px solid #33ff00;
+            padding: 5px 10px;
+            font-family: inherit;
+            font-size: 15px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 2px 2px 0px #1b8800;
+        }
+
+        button:hover, select:hover {
+            background: #33ff00;
+            color: #000;
+        }
+
+        button:active {
+            transform: translate(2px, 2px);
+            box-shadow: none;
+        }
+
+        canvas {
+            background-color: #050508;
+            border: 3px solid #444;
+            display: block;
+            cursor: crosshair;
+        }
+
+        #controls {
+            width: 720px;
+            margin-top: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 15px;
+            color: #aaa;
+            background: #000;
+            padding: 8px 14px;
+            border: 2px solid #333;
+        }
+
+        .speed-control {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #ff66aa;
+            font-weight: bold;
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 110px;
+            height: 8px;
+            background: #222;
+            border: 1px solid #ff66aa;
+            outline: none;
+            cursor: pointer;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px;
+            height: 18px;
+            background: #ff66aa;
+            cursor: pointer;
+            border: 2px solid #fff;
+        }
+
+        .legend {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .legend span {
+            padding: 2px 7px;
+            font-size: 13px;
+            color: #000;
+            font-weight: bold;
+            border-top: 2px solid rgba(255,255,255,0.7);
+            border-left: 2px solid rgba(255,255,255,0.7);
+            border-right: 2px solid rgba(0,0,0,0.6);
+            border-bottom: 2px solid rgba(0,0,0,0.6);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="arcade-cabinet">
+        <h1>★ RETRO DEUTSCH A1 BREAKOUT ★</h1>
+        
+        <div id="hud">
+            <div class="stats">
+                <span>SCORE:<b id="score">000</b></span>
+                <span>LIVES:<b id="lives">♥♥♥</b></span>
+                <span>LEFT:<b id="left">000</b></span>
+            </div>
+            <div class="target-box">
+                懸賞(+30): <span id="target-word">LOADING...</span>
+            </div>
+            <div class="actions">
+                <select id="category-select" onchange="initGame()">
+                    <option value="all">全部主題</option>
+                </select>
+                <button onclick="initGame()">RESET</button>
+            </div>
+        </div>
+
+        <div id="last-hit-bar">
+            💡 懸賞只會出現在最前排（亮框）磚塊！命中懸賞 +30、前排 +10、後排不算分
+        </div>
+
+        <canvas id="gameCanvas" width="720" height="480"></canvas>
+
+        <div id="controls">
+            <div class="speed-control">
+                <label for="speed-slider">球速:</label>
+                <input type="range" id="speed-slider" min="1" max="5" step="0.5" value="2" oninput="updateSpeed(this.value)">
+                <span id="speed-label" style="min-width: 75px;">Lv.2 (慢速)</span>
+                <button id="sfx-btn" onclick="toggleSfx()" style="padding: 2px 6px; font-size: 12px;">🔊 8-bit音</button>
+            </div>
+
+            <div class="legend">
+                <span style="background: #3399ff;">der 陽</span>
+                <span style="background: #ff4466;">die 陰</span>
+                <span style="background: #33dd66;">das 中</span>
+                <span style="background: #cc66ff;">die 複</span>
+                <span style="background: #ff9900;">其他</span>
+            </div>
+        </div>
+    </div>
+
+<script>
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+
+let allVocab = [];
+
+const genderColors = {
+    m: "#3399ff",     // der (陽性)
+    f: "#ff4466",     // die (陰性)
+    n: "#33dd66",     // das (中性)
+    pl: "#cc66ff",    // die (複數名詞)
+    other: "#ff9900"  // 動詞、形容詞、其他
+};
+
+const speedMap = {
+    "1":   { val: 1.0, text: "Lv.1 (極慢)" },
+    "1.5": { val: 1.3, text: "Lv.1.5" },
+    "2":   { val: 1.6, text: "Lv.2 (慢速)" },
+    "2.5": { val: 2.0, text: "Lv.2.5" },
+    "3":   { val: 2.4, text: "Lv.3 (適中)" },
+    "3.5": { val: 2.9, text: "Lv.3.5" },
+    "4":   { val: 3.4, text: "Lv.4 (偏快)" },
+    "4.5": { val: 3.9, text: "Lv.4.5" },
+    "5":   { val: 4.5, text: "Lv.5 (超快)" }
+};
+
+let currentBaseSpeed = speedMap["2"].val;
+let score = 0;
+let lives = 3;
+let gameOver = false;
+let gameWon = false;
+let ballWaiting = true;
+let currentTarget = null;
+let animationId;
+let sfxEnabled = true;
+let floatingTexts = [];
+let wordQueue = [];        // 該主題尚未出現過的單字
+let pendingRefills = [];   // 等待補磚的位置 {c, r, at}
+const REFILL_DELAY_MS = 700;
+
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+function playBeep(freq, duration, type = "square") {
+    if (!sfxEnabled) return;
+    try {
+        if (audioCtx.state === "suspended") audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+    } catch (e) {}
+}
+
+function toggleSfx() {
+    sfxEnabled = !sfxEnabled;
+    document.getElementById("sfx-btn").innerText = sfxEnabled ? "🔊 8-bit音" : "🔇 靜音";
+}
+
+const ball = { x: 360, y: 400, dx: 1.6, dy: -1.6, size: 10 };
+const paddle = { height: 14, width: 116, x: 302, speed: 6, rightPressed: false, leftPressed: false };
+
+const brickRowCount = 4;
+const brickColumnCount = 4;
+const brickWidth = 156;
+const brickHeight = 38;
+const brickPadding = 14;
+const brickOffsetTop = 32;
+const brickOffsetLeft = 27;
+let bricks = [];
+
+function updateSpeed(sliderVal) {
+    const info = speedMap[sliderVal];
+    currentBaseSpeed = info.val;
+    document.getElementById("speed-label").innerText = info.text;
+
+    const currentMag = Math.hypot(ball.dx, ball.dy);
+    if (currentMag > 0) {
+        const targetMag = Math.hypot(currentBaseSpeed, currentBaseSpeed);
+        ball.dx = (ball.dx / currentMag) * targetMag;
+        ball.dy = (ball.dy / currentMag) * targetMag;
+    }
+}
+
+// 透過 fetch 讀取同資料夾下的 vocab.json
+async function loadVocab() {
+    try {
+        const res = await fetch('./vocab.json');
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        allVocab = await res.json();
+        populateCategories();
+        initGame();
+    } catch (err) {
+        console.error("無法讀取 vocab.json:", err);
+        document.getElementById("target-word").innerText = "ERROR: 找不到 vocab.json";
+        drawOverlay("LOAD ERROR", "請確認 vocab.json 在同目錄，並使用 Live Server 開啟");
+    }
+}
+
+function populateCategories() {
+    const select = document.getElementById("category-select");
+    const categories = [...new Set(allVocab.map(item => item.category))];
+    select.innerHTML = `<option value="all">全部主題 (${allVocab.length})</option>`;
+    
+    categories.forEach(cat => {
+        const count = allVocab.filter(v => v.category === cat).length;
+        const option = document.createElement("option");
+        option.value = cat;
+        option.textContent = `${cat} (${count})`;
+        select.appendChild(option);
+    });
+}
+
+function speakGerman(text) {
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const cleanText = text.replace(/\s*\(.*?\)\s*/g, '');
+        const utterance = new SpeechSynthesisUtterance(cleanText);
+        utterance.lang = 'de-DE';
+        utterance.rate = 0.9;
+        window.speechSynthesis.speak(utterance);
+    }
+}
+
+function shuffle(array) {
+    const arr = [...array];
+    for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+}
+
+function countActiveBricks() {
+    let n = 0;
+    for (let c = 0; c < brickColumnCount; c++) {
+        for (let r = 0; r < brickRowCount; r++) {
+            if (bricks[c] && bricks[c][r] && bricks[c][r].status === 1) n++;
+        }
+    }
+    return n;
+}
+
+function updateHudStats() {
+    document.getElementById("score").innerText = String(score).padStart(3, "0");
+    document.getElementById("lives").innerText = "♥".repeat(lives) + "♡".repeat(3 - lives);
+    const left = countActiveBricks() + pendingRefills.length + wordQueue.length;
+    document.getElementById("left").innerText = String(left).padStart(3, "0");
+}
+
+// 每一欄最下方（最靠近球拍）的磚塊 = 可得分的「選項」
+function getFrontLineBricks() {
+    const front = [];
+    for (let c = 0; c < brickColumnCount; c++) {
+        for (let r = brickRowCount - 1; r >= 0; r--) {
+            if (bricks[c][r] && bricks[c][r].status === 1) {
+                front.push(bricks[c][r]);
+                break;
+            }
+        }
+    }
+    return front;
+}
+
+function isFrontLineBrick(b) {
+    return getFrontLineBricks().includes(b);
+}
+
+function pickNewTarget() {
+    const activeBricks = getFrontLineBricks();
+    if (activeBricks.length === 0 && pendingRefills.length > 0) {
+        return; // 磚塊正在補充中，等補好再出懸賞
+    }
+    if (activeBricks.length === 0) {
+        gameWon = true;
+        document.getElementById("target-word").innerText = "STAGE CLEAR! 🎉";
+        playBeep(523, 0.1);
+        setTimeout(() => playBeep(659, 0.1), 100);
+        setTimeout(() => playBeep(784, 0.25), 200);
+        return;
+    }
+    const randomBrick = activeBricks[Math.floor(Math.random() * activeBricks.length)];
+    currentTarget = randomBrick.vocab;
+    document.getElementById("target-word").innerText = currentTarget.zh;
+}
+
+function initGame() {
+    if (allVocab.length === 0) return;
+    cancelAnimationFrame(animationId);
+    
+    score = 0;
+    lives = 3;
+    gameOver = false;
+    gameWon = false;
+    floatingTexts = [];
+    updateHudStats();
+    document.getElementById("last-hit-bar").innerHTML = "💡 懸賞只會出現在最前排（亮框）磚塊！命中懸賞 +30、前排 +10、後排不算分";
+
+    resetBallAndPaddle();
+
+    const selectedCategory = document.getElementById("category-select").value;
+    const filteredPool = selectedCategory === "all" 
+        ? allVocab 
+        : allVocab.filter(v => v.category === selectedCategory);
+
+    const shuffledPool = shuffle(filteredPool);
+    const slotCount = brickRowCount * brickColumnCount;
+    const selectedVocab = shuffledPool.slice(0, slotCount);
+    wordQueue = shuffledPool.slice(slotCount);
+    pendingRefills = [];
+    let idx = 0;
+    bricks = [];
+    for (let c = 0; c < brickColumnCount; c++) {
+        bricks[c] = [];
+        for (let r = 0; r < brickRowCount; r++) {
+            const vocabItem = selectedVocab[idx % selectedVocab.length];
+            const bx = c * (brickWidth + brickPadding) + brickOffsetLeft;
+            const by = r * (brickHeight + brickPadding) + brickOffsetTop;
+            bricks[c][r] = {
+                x: bx,
+                y: by,
+                status: 1,
+                vocab: vocabItem
+            };
+            idx++;
+        }
+    }
+
+    pickNewTarget();
+    updateHudStats();
+    draw();
+}
+
+// 被打掉的磚塊，稍後用該主題尚未出現的單字補回原位
+function scheduleRefill(c, r) {
+    if (wordQueue.length === 0) return;
+    pendingRefills.push({ c, r, at: performance.now() + REFILL_DELAY_MS });
+}
+
+function processRefills() {
+    if (pendingRefills.length === 0) return;
+    const now = performance.now();
+    const half = ball.size / 2;
+    let refilled = false;
+    for (let i = pendingRefills.length - 1; i >= 0; i--) {
+        const p = pendingRefills[i];
+        if (now < p.at) continue;
+        const slot = bricks[p.c][p.r];
+        // 球還壓在這個位置上就先不補，避免一出現就被連打
+        const overlapping = !ballWaiting &&
+            ball.x + half > slot.x && ball.x - half < slot.x + brickWidth &&
+            ball.y + half > slot.y && ball.y - half < slot.y + brickHeight;
+        if (overlapping) continue;
+        if (wordQueue.length === 0) { pendingRefills.splice(i, 1); continue; }
+        slot.vocab = wordQueue.shift();
+        slot.status = 1;
+        pendingRefills.splice(i, 1);
+        refilled = true;
+    }
+    if (refilled) {
+        playBeep(660, 0.05, "triangle");
+        updateHudStats();
+        // 補磚後若懸賞已不在最前排，重新出題
+        const front = getFrontLineBricks();
+        if (!currentTarget || !front.some(b => b.vocab.de === currentTarget.de)) {
+            pickNewTarget();
+        }
+    }
+}
+
+function resetBallAndPaddle() {
+    ballWaiting = true;
+    paddle.x = (canvas.width - paddle.width) / 2;
+    ball.x = paddle.x + paddle.width / 2;
+    ball.y = canvas.height - paddle.height - 14 - ball.size / 2;
+    ball.dx = (Math.random() > 0.5 ? 1 : -1) * currentBaseSpeed;
+    ball.dy = -currentBaseSpeed;
+}
+
+document.addEventListener("keydown", (e) => {
+    if (e.key === "Right" || e.key === "ArrowRight") paddle.rightPressed = true;
+    else if (e.key === "Left" || e.key === "ArrowLeft") paddle.leftPressed = true;
+    else if (e.code === "Space" && ballWaiting && !gameOver && !gameWon) {
+        e.preventDefault();
+        ballWaiting = false;
+        playBeep(440, 0.08);
+    }
+});
+document.addEventListener("keyup", (e) => {
+    if (e.key === "Right" || e.key === "ArrowRight") paddle.rightPressed = false;
+    else if (e.key === "Left" || e.key === "ArrowLeft") paddle.leftPressed = false;
+});
+document.addEventListener("mousemove", (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const relativeX = e.clientX - rect.left;
+    if (relativeX > paddle.width / 2 && relativeX < canvas.width - paddle.width / 2) {
+        paddle.x = relativeX - paddle.width / 2;
+    }
+});
+canvas.addEventListener("click", () => {
+    if (ballWaiting && !gameOver && !gameWon) {
+        ballWaiting = false;
+        playBeep(440, 0.08);
+    }
+});
+
+function collisionDetection() {
+    const half = ball.size / 2;
+    for (let c = 0; c < brickColumnCount; c++) {
+        for (let r = 0; r < brickRowCount; r++) {
+            const b = bricks[c][r];
+            if (b && b.status === 1) {
+                if (ball.x + half > b.x &&
+                    ball.x - half < b.x + brickWidth &&
+                    ball.y + half > b.y &&
+                    ball.y - half < b.y + brickHeight) {
+                    
+                    const overlapLeft = (ball.x + half) - b.x;
+                    const overlapRight = (b.x + brickWidth) - (ball.x - half);
+                    const overlapTop = (ball.y + half) - b.y;
+                    const overlapBottom = (b.y + brickHeight) - (ball.y - half);
+                    const minOverlapX = Math.min(overlapLeft, overlapRight);
+                    const minOverlapY = Math.min(overlapTop, overlapBottom);
+
+                    if (minOverlapX < minOverlapY) {
+                        ball.dx = -ball.dx;
+                    } else {
+                        ball.dy = -ball.dy;
+                    }
+
+                    const isOption = isFrontLineBrick(b);
+                    b.status = 0;
+                    scheduleRefill(c, r);
+                    speakGerman(b.vocab.de);
+
+                    const isTargetHit = isOption && currentTarget && b.vocab.de === currentTarget.de;
+                    const points = isTargetHit ? 30 : (isOption ? 10 : 0);
+                    score += points;
+                    updateHudStats();
+
+                    if (isTargetHit) {
+                        playBeep(784, 0.14);
+                        document.getElementById("last-hit-bar").innerHTML = 
+                            `🎯 <b style="color:#ffff00">精準命中懸賞！ +30分</b> ｜ <b>${b.vocab.de}</b> ＝ ${b.vocab.zh}`;
+                    } else if (isOption) {
+                        playBeep(523, 0.09);
+                        document.getElementById("last-hit-bar").innerHTML = 
+                            `💥 擊碎磚塊 +10分 ｜ <b>${b.vocab.de}</b> ＝ <span style="color:#00ffff">${b.vocab.zh}</span>`;
+                    } else {
+                        playBeep(200, 0.12, "sawtooth");
+                        document.getElementById("last-hit-bar").innerHTML = 
+                            `⛔ <b style="color:#ff6666">不是最靠近的磚塊，不算分</b> ｜ <b>${b.vocab.de}</b> ＝ <span style="color:#00ffff">${b.vocab.zh}</span>`;
+                    }
+
+                    floatingTexts.push({
+                        x: b.x + brickWidth / 2,
+                        y: b.y + brickHeight / 2,
+                        text: isOption ? `${b.vocab.zh} +${points}` : `${b.vocab.zh} 不算分`,
+                        color: isTargetHit ? "#ffff00" : (isOption ? "#33ff00" : "#ff6666"),
+                        alpha: 1.0
+                    });
+
+                    pickNewTarget();
+                    return;
+                }
+            }
+        }
+    }
+}
+
+function drawRetroGrid() {
+    ctx.strokeStyle = "rgba(51, 255, 0, 0.05)";
+    ctx.lineWidth = 1;
+    for (let x = 0; x < canvas.width; x += 24) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, canvas.height);
+        ctx.stroke();
+    }
+    for (let y = 0; y < canvas.height; y += 24) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(canvas.width, y);
+        ctx.stroke();
+    }
+}
+
+function drawBall() {
+    ctx.fillStyle = "#ffffff";
+    ctx.shadowColor = "#00ffff";
+    ctx.shadowBlur = 8;
+    ctx.fillRect(ball.x - ball.size / 2, ball.y - ball.size / 2, ball.size, ball.size);
+    ctx.shadowBlur = 0;
+}
+
+function drawPaddle() {
+    const py = canvas.height - paddle.height - 10;
+    ctx.fillStyle = "#00ffff";
+    ctx.fillRect(paddle.x, py, paddle.width, paddle.height);
+
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(paddle.x, py, paddle.width, 3);
+    ctx.fillStyle = "#007799";
+    ctx.fillRect(paddle.x, py + paddle.height - 3, paddle.width, 3);
+}
+
+function drawBricks() {
+    const frontLine = getFrontLineBricks();
+    for (let c = 0; c < brickColumnCount; c++) {
+        for (let r = 0; r < brickRowCount; r++) {
+            const b = bricks[c][r];
+            if (b && b.status === 1) {
+                const bx = b.x;
+                const by = b.y;
+                const baseColor = genderColors[b.vocab.gender] || genderColors.other;
+                const isOption = frontLine.includes(b);
+
+                ctx.save();
+                ctx.globalAlpha = isOption ? 1.0 : 0.4;
+                ctx.fillStyle = baseColor;
+                ctx.fillRect(bx, by, brickWidth, brickHeight);
+
+                ctx.fillStyle = "rgba(255, 255, 255, 0.45)";
+                ctx.fillRect(bx, by, brickWidth, 4);
+                ctx.fillRect(bx, by, 4, brickHeight);
+
+                ctx.fillStyle = "rgba(0, 0, 0, 0.45)";
+                ctx.fillRect(bx, by + brickHeight - 4, brickWidth, 4);
+                ctx.fillRect(bx + brickWidth - 4, by, 4, brickHeight);
+
+                const fontSize = b.vocab.de.length > 16 ? 13 : 16;
+                ctx.font = `bold ${fontSize}px 'Courier New', monospace`;
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+
+                ctx.fillStyle = "#000000";
+                ctx.fillText(b.vocab.de, bx + brickWidth / 2 + 1, by + brickHeight / 2 + 1);
+                ctx.fillStyle = "#ffffff";
+                ctx.fillText(b.vocab.de, bx + brickWidth / 2, by + brickHeight / 2);
+                ctx.restore();
+
+                if (isOption) {
+                    ctx.strokeStyle = "#ffffff";
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(bx + 1, by + 1, brickWidth - 2, brickHeight - 2);
+                }
+            }
+        }
+    }
+}
+
+function drawFloatingTexts() {
+    for (let i = floatingTexts.length - 1; i >= 0; i--) {
+        const ft = floatingTexts[i];
+        ctx.save();
+        ctx.globalAlpha = ft.alpha;
+        ctx.font = "bold 16px 'Microsoft JhengHei', sans-serif";
+        ctx.fillStyle = ft.color;
+        ctx.textAlign = "center";
+        ctx.fillText(ft.text, ft.x, ft.y);
+        ctx.restore();
+
+        ft.y -= 0.8;
+        ft.alpha -= 0.02;
+        if (ft.alpha <= 0) {
+            floatingTexts.splice(i, 1);
+        }
+    }
+}
+
+function drawOverlay(text, subtext) {
+    ctx.fillStyle = "rgba(0, 0, 0, 0.85)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.font = "bold 44px 'VT323', monospace";
+    ctx.fillStyle = "#ffcc00";
+    ctx.textAlign = "center";
+    ctx.fillText(text, canvas.width / 2, canvas.height / 2 - 15);
+    ctx.font = "20px 'VT323', monospace";
+    ctx.fillStyle = "#33ff00";
+    ctx.fillText(subtext, canvas.width / 2, canvas.height / 2 + 25);
+}
+
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawRetroGrid();
+    drawBricks();
+    drawFloatingTexts();
+    drawBall();
+    drawPaddle();
+
+    if (gameWon) {
+        drawOverlay("STAGE CLEAR!", "請點擊上方 RESET 挑戰下一輪單字");
+        return;
+    }
+    if (gameOver) {
+        drawOverlay("GAME OVER", "請點擊上方 RESET 重新投幣開始");
+        return;
+    }
+
+    if (paddle.rightPressed && paddle.x < canvas.width - paddle.width) {
+        paddle.x += paddle.speed;
+    } else if (paddle.leftPressed && paddle.x > 0) {
+        paddle.x -= paddle.speed;
+    }
+
+    if (ballWaiting) {
+        ball.x = paddle.x + paddle.width / 2;
+        ball.y = canvas.height - paddle.height - 12 - ball.size / 2;
+
+        ctx.font = "bold 20px 'VT323', monospace";
+        ctx.fillStyle = "#00ffff";
+        ctx.textAlign = "center";
+        ctx.fillText("PRESS [SPACE] OR [CLICK] TO LAUNCH BALL", canvas.width / 2, canvas.height - 65);
+
+        animationId = requestAnimationFrame(draw);
+        return;
+    }
+
+    ball.x += ball.dx;
+    ball.y += ball.dy;
+
+    processRefills();
+    collisionDetection();
+
+    const half = ball.size / 2;
+
+    if (ball.x + half > canvas.width) {
+        ball.x = canvas.width - half;
+        ball.dx = -Math.abs(ball.dx);
+        playBeep(300, 0.04);
+    } else if (ball.x - half < 0) {
+        ball.x = half;
+        ball.dx = Math.abs(ball.dx);
+        playBeep(300, 0.04);
+    }
+
+    if (ball.y - half < 0) {
+        ball.y = half;
+        ball.dy = Math.abs(ball.dy);
+        playBeep(300, 0.04);
+    } 
+    else if (ball.y + half >= canvas.height - paddle.height - 10) {
+        if (ball.dy > 0 && ball.x + half >= paddle.x && ball.x - half <= paddle.x + paddle.width && ball.y - half <= canvas.height - 10) {
+            const hitPoint = Math.max(-1, Math.min(1, (ball.x - (paddle.x + paddle.width / 2)) / (paddle.width / 2)));
+            const maxAngle = Math.PI / 3;
+            const angle = hitPoint * maxAngle;
+            const totalSpeed = Math.hypot(currentBaseSpeed, currentBaseSpeed);
+
+            ball.dx = totalSpeed * Math.sin(angle);
+            ball.dy = -Math.abs(totalSpeed * Math.cos(angle));
+            ball.y = canvas.height - paddle.height - 10 - half;
+            playBeep(440, 0.06);
+        } else if (ball.y - half > canvas.height) {
+            lives--;
+            updateHudStats();
+            playBeep(120, 0.3, "sawtooth");
+            if (lives === 0) {
+                gameOver = true;
+            } else {
+                resetBallAndPaddle();
+            }
+        }
+    }
+
+    animationId = requestAnimationFrame(draw);
+}
+
+// 啟動載入 JSON
+loadVocab();
+</script>
+</body>
+</html>
